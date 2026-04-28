@@ -1,0 +1,96 @@
+{
+  "0d8e3e6b-718c-476b-8cca-66283c2397ce": {
+    "lessons": {
+      "w1": {
+        "completed": true,
+        "updatedAt": "2026-04-21T17:16:20.433Z"
+      },
+      "w2": {
+        "completed": true,
+        "updatedAt": "2026-04-21T17:16:31.521Z"
+      }
+    },
+    "quizzes": {
+      "v2:course:course:w4": {
+        "score": 4,
+        "total": 4,
+        "title": "W4 激光标靶与精度控制",
+        "type": "course",
+        "updatedAt": "2026-04-21T17:07:27.004Z"
+      }
+    },
+    "quizAttempts": [
+      {
+        "score": 4,
+        "total": 4,
+        "title": "W4 激光标靶与精度控制",
+        "type": "course",
+        "updatedAt": "2026-04-21T17:07:27.004Z"
+      }
+    ],
+    "questionAttempts": [
+      {
+        "questionId": "k1-005",
+        "title": "激光波长",
+        "type": "course",
+        "correct": true,
+        "tags": [
+          "标靶",
+          "射击"
+        ],
+        "answeredAt": "2026-04-21T17:07:27.004Z"
+      },
+      {
+        "questionId": "k1-004",
+        "title": "呼吸控制",
+        "type": "course",
+        "correct": true,
+        "tags": [
+          "射击",
+          "精度"
+        ],
+        "answeredAt": "2026-04-21T17:07:27.004Z"
+      },
+      {
+        "questionId": "k1-003",
+        "title": "激光标靶：命中因素",
+        "type": "course",
+        "correct": true,
+        "tags": [
+          "标靶",
+          "射击"
+        ],
+        "answeredAt": "2026-04-21T17:07:27.004Z"
+      },
+      {
+        "questionId": "k1-002",
+        "title": "射击基础：扳机控制",
+        "type": "course",
+        "correct": true,
+        "tags": [
+          "射击",
+          "精度"
+        ],
+        "answeredAt": "2026-04-21T17:07:27.004Z"
+      }
+    ],
+    "tagStats": {
+      "标靶": {
+        "answered": 2,
+        "correct": 2,
+        "accuracy": 100
+      },
+      "射击": {
+        "answered": 4,
+        "correct": 4,
+        "accuracy": 100
+      },
+      "精度": {
+        "answered": 2,
+        "correct": 2,
+        "accuracy": 100
+      }
+    },
+    "achievements": {}
+  }
+}
