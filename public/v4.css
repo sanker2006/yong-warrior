@@ -4475,35 +4475,75 @@ body::after {
    V4 活动模块样式 - 作战指挥终端风格
    ═══════════════════════════════════════════════════════════════ */
 
-/* ─── 活动列表 ─── */
+/* ═══════════════════════════════════════════════════════════════
+   ACTIVITY MODULE — Redesigned V4
+   Design: Military Tactical Briefing Card System
+   Principles:
+   1. Status-first visual hierarchy (color = state)
+   2. Social proof (who's in) as primary info
+   3. Action anchoring (CTA always visible)
+   4. Information scent (glanceable, scannable)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Activity List: Tactical Briefing Cards ─── */
 .activity-list {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
-  padding-top: var(--sp-3);
+  padding: var(--sp-3) 0;
 }
 
+/* Status strip indicator — left border color = state */
 .activity-card {
-  padding: var(--sp-4);
+  position: relative;
+  padding: 0;
   background: var(--bg-secondary);
   border: var(--border-subtle);
   border-radius: var(--radius-lg);
   cursor: pointer;
-  transition: all var(--duration-fast) var(--ease-out);
+  transition: all var(--duration-normal) var(--ease-out);
+  overflow: hidden;
 }
+
+/* Left status strip */
+.activity-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--text-muted);
+  transition: background var(--duration-normal) var(--ease-out);
+}
+
+.activity-card[data-status="active"]::before { background: var(--accent-cyan); }
+.activity-card[data-status="pending"]::before { background: var(--accent-amber); }
+.activity-card[data-status="ended"]::before { background: var(--text-muted); }
+.activity-card[data-status="cancelled"]::before { background: var(--accent-red); }
 
 .activity-card:active {
-  transform: scale(0.98);
-  border-color: rgba(232, 168, 48, 0.3);
-  background: var(--bg-tertiary);
+  transform: scale(0.985);
+  border-color: rgba(232, 168, 48, 0.25);
 }
 
-.activity-card__header {
+/* Card inner layout: 2-row grid */
+.activity-card__body {
+  padding: var(--sp-3) var(--sp-4);
+  padding-left: calc(var(--sp-4) + 3px);
+}
+
+/* Row 1: Status badge + Title + Time */
+.activity-card__top {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;
   gap: var(--sp-2);
   margin-bottom: var(--sp-2);
+}
+
+.activity-card__status-badge {
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .activity-card__title {
@@ -4514,84 +4554,352 @@ body::after {
   margin: 0;
   flex: 1;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.activity-card__desc {
-  font-size: var(--fs-sm);
-  color: var(--text-secondary);
-  line-height: 1.5;
-  margin-bottom: var(--sp-3);
+  line-height: 1.35;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.activity-card__meta {
+/* Row 2: Meta info bar */
+.activity-card__meta-bar {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
   align-items: center;
-  font-size: var(--fs-xs);
-  color: var(--text-muted);
+  gap: var(--sp-3);
+  flex-wrap: wrap;
 }
 
-.activity-card__time,
-.activity-card__location,
-.activity-card__count {
+.activity-card__meta-item {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
 }
 
-.activity-card__status {
+.activity-card__meta-item svg {
+  width: 12px;
+  height: 12px;
+  opacity: 0.6;
+}
+
+/* Social proof: who's registered */
+.activity-card__attendees {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
   margin-top: var(--sp-2);
   padding-top: var(--sp-2);
   border-top: var(--border-subtle);
 }
 
-/* ─── 活动详情 ─── */
-.activity-detail {
-  padding-top: var(--sp-4);
+.activity-card__attendee-avatars {
+  display: flex;
+  align-items: center;
 }
 
-.activity-detail__header {
+.activity-card__attendee-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  border: 2px solid var(--bg-secondary);
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-left: -6px;
+}
+
+.activity-card__attendee-avatar:first-child {
+  margin-left: 0;
+}
+
+.activity-card__attendee-count {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  margin-left: var(--sp-1);
+}
+
+.activity-card__my-badge {
+  margin-left: auto;
+  font-size: var(--fs-xs);
+  padding: 2px 8px;
+  border-radius: 100px;
+  background: var(--accent-cyan-dim);
+  color: var(--accent-cyan);
+  font-family: var(--font-mono);
+}
+
+/* ─── Activity Detail: Tactical Briefing Page ─── */
+.activity-detail {
+  padding-top: var(--sp-2);
+  padding-bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 80px);
+}
+
+/* Hero banner with status */
+.activity-detail__hero {
+  position: relative;
+  padding: var(--sp-5) var(--sp-4);
+  margin: 0 calc(-1 * var(--sp-4));
+  margin-top: calc(-1 * var(--sp-4));
+  margin-bottom: var(--sp-4);
+  background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
+  border-bottom: var(--border-subtle);
+}
+
+.activity-detail__hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+}
+
+.activity-detail__hero[data-status="active"]::before { background: var(--accent-cyan); }
+.activity-detail__hero[data-status="pending"]::before { background: var(--accent-amber); }
+.activity-detail__hero[data-status="ended"]::before { background: var(--text-muted); }
+.activity-detail__hero[data-status="cancelled"]::before { background: var(--accent-red); }
+
+.activity-detail__hero-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  margin-bottom: var(--sp-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.activity-detail__hero-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.activity-detail__hero h2 {
+  font-family: var(--font-display);
+  font-size: var(--fs-2xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 var(--sp-2) 0;
+  line-height: 1.25;
+}
+
+.activity-detail__hero-subtitle {
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Info grid: 2-col on mobile */
+.activity-detail__info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: var(--sp-3);
   margin-bottom: var(--sp-4);
 }
 
-.activity-detail__header h2 {
-  font-family: var(--font-display);
-  font-size: var(--fs-xl);
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0;
-  flex: 1;
-  line-height: 1.3;
+.activity-detail__info-cell {
+  padding: var(--sp-3);
+  background: var(--bg-secondary);
+  border: var(--border-subtle);
+  border-radius: var(--radius-md);
 }
 
-.activity-detail__info {
+.activity-detail__info-cell--full {
+  grid-column: 1 / -1;
+}
+
+.activity-detail__info-label {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: var(--sp-1);
+}
+
+.activity-detail__info-value {
+  font-size: var(--fs-sm);
+  color: var(--text-primary);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* Attendees section: who registered */
+.activity-detail__attendees {
+  margin-bottom: var(--sp-4);
+}
+
+.activity-detail__attendees-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--sp-3);
+}
+
+.activity-detail__attendees-title {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.activity-detail__attendees-count {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  background: var(--bg-tertiary);
+  padding: 2px 8px;
+  border-radius: 100px;
+}
+
+.activity-detail__attendee-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.activity-detail__attendee-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-2);
+  background: var(--bg-tertiary);
+  border: var(--border-subtle);
+  border-radius: var(--radius-md);
   font-size: var(--fs-sm);
   color: var(--text-secondary);
-  line-height: 2;
 }
 
-.activity-detail__info p {
-  margin: 0;
+.activity-detail__attendee-chip-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent-amber-dim);
+  color: var(--accent-amber);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
 }
 
-.activity-detail__info span {
+/* Fixed bottom action bar */
+.activity-detail__action-bar {
+  position: fixed;
+  bottom: calc(var(--tabbar-h) + var(--safe-bottom));
+  left: 0;
+  right: 0;
+  z-index: var(--z-header);
+  padding: var(--sp-3) var(--sp-4);
+  padding-bottom: calc(var(--sp-3) + var(--safe-bottom));
+  background: linear-gradient(0deg, var(--bg-primary) 60%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.activity-detail__action-bar-inner {
+  max-width: var(--content-max-w);
+  margin: 0 auto;
+}
+
+/* Description block */
+.activity-detail__section {
+  margin-bottom: var(--sp-4);
+}
+
+.activity-detail__section-title {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--sp-2);
+  padding-bottom: var(--sp-2);
+  border-bottom: var(--border-subtle);
+}
+
+.activity-detail__section-body {
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+/* ─── My Activities: Compact list ─── */
+.my-activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-2) 0;
+}
+
+.my-activity-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--bg-secondary);
+  border: var(--border-subtle);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.my-activity-item:active {
+  background: var(--bg-tertiary);
+}
+
+.my-activity-item__status {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.my-activity-item__status--active { background: var(--accent-cyan); box-shadow: 0 0 6px rgba(0,212,170,0.4); }
+.my-activity-item__status--pending { background: var(--accent-amber); }
+.my-activity-item__status--ended { background: var(--text-muted); }
+.my-activity-item__status--cancelled { background: var(--accent-red); }
+
+.my-activity-item__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.my-activity-item__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 2px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.my-activity-item__meta {
+  font-size: var(--fs-xs);
   color: var(--text-muted);
+  font-family: var(--font-mono);
 }
 
-.activity-detail__actions {
-  margin-top: var(--sp-4);
+.my-activity-item__badge {
+  flex-shrink: 0;
 }
 
 /* ─── 管理端活动管理 ─── */
@@ -4666,43 +4974,6 @@ body::after {
   display: flex;
   gap: var(--sp-1);
   justify-content: flex-end;
-}
-
-/* ─── 活动报名人员列表 ─── */
-.registration-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-}
-
-.registration-row {
-  display: grid;
-  grid-template-columns: 1fr 120px 120px;
-  gap: var(--sp-3);
-  align-items: center;
-  padding: var(--sp-3) var(--sp-4);
-  background: var(--bg-secondary);
-  border: var(--border-subtle);
-  border-radius: var(--radius-md);
-}
-
-.registration-row__name {
-  font-family: var(--font-display);
-  font-size: var(--fs-sm);
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.registration-row__phone {
-  font-size: var(--fs-xs);
-  color: var(--text-muted);
-  text-align: center;
-}
-
-.registration-row__time {
-  font-size: var(--fs-xs);
-  color: var(--text-muted);
-  text-align: right;
 }
 
 /* ─── 活动表单模态框 ─── */

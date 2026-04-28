@@ -270,11 +270,12 @@ async function handleApi(req, res) {
     const user = getSessionUser(req);
     if (!user) return sendJson(res, 401, { error: "未登录" });
     const activities = store.getActiveActivities();
-    // Attach registration count and user's registration status
+    // Attach registration count, user's registration status, and recent registrant names
     const result = activities.map(a => ({
       ...a,
       registrationCount: store.getRegistrationCount(a.id),
-      isRegistered: store.isUserRegistered(user.id, a.id)
+      isRegistered: store.isUserRegistered(user.id, a.id),
+      recentRegistrations: store.getRecentRegistrations(a.id, 3)
     }));
     return sendJson(res, 200, { activities: result });
   }
@@ -320,7 +321,8 @@ async function handleApi(req, res) {
     return sendJson(res, 200, {
       ...activity,
       registrationCount: store.getRegistrationCount(activityId),
-      isRegistered: store.isUserRegistered(user.id, activityId)
+      isRegistered: store.isUserRegistered(user.id, activityId),
+      recentRegistrations: store.getRecentRegistrations(activityId, 10)
     });
   }
 
@@ -334,7 +336,8 @@ async function handleApi(req, res) {
     const activities = store.listActivities();
     const result = activities.map(a => ({
       ...a,
-      registrationCount: store.getRegistrationCount(a.id)
+      registrationCount: store.getRegistrationCount(a.id),
+      recentRegistrations: store.getRecentRegistrations(a.id, 3)
     }));
     return sendJson(res, 200, { activities: result });
   }

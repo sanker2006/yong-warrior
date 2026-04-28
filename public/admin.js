@@ -585,11 +585,11 @@ function renderActivityPage() {
     ? sorted.filter(a => a.status === adminState.activityFilter)
     : sorted;
 
-  const statusLabels = {
-    pending: { text: "即将开始", class: "badge--amber" },
-    active: { text: "进行中", class: "badge--cyan" },
-    ended: { text: "已结束", class: "badge--ghost" },
-    cancelled: { text: "已取消", class: "badge--red" }
+  const statusConfig = {
+    pending: { text: "即将开始", class: "badge--amber", dot: "#e8a830" },
+    active: { text: "进行中", class: "badge--cyan", dot: "#00d4aa" },
+    ended: { text: "已结束", class: "badge--ghost", dot: "#7a7f8e" },
+    cancelled: { text: "已取消", class: "badge--red", dot: "#ff4444" }
   };
 
   return `
@@ -597,7 +597,7 @@ function renderActivityPage() {
       <div>
         <div class="eyebrow">ACTIVITY MANAGEMENT CENTER</div>
         <h1>活动管理中心</h1>
-        <p>创建、管理训练活动，查看活动报名人员，更新活动状态。</p>
+        <p>创建、管理训练活动，查看报名人员，更新活动状态。</p>
       </div>
       <button class="btn btn--primary" id="btn-new-activity">新建活动</button>
     </header>
@@ -621,36 +621,56 @@ function renderActivityPage() {
       <table class="admin-table">
         <thead>
           <tr>
+            <th style="width: 40px"></th>
             <th>活动名称</th>
-            <th>状态</th>
-            <th>报名人数</th>
-            <th>开始时间</th>
-            <th>地点</th>
+            <th>报名/名额</th>
+            <th>已报名人员</th>
+            <th>时间</th>
             <th>操作</th>
           </tr>
         </thead>
         <tbody>
-          ${filtered.length ? filtered.map(activity => `
-            <tr onclick="openActivityDetail('${activity.id}')" style="cursor: pointer;">
-              <td>
-                <strong style="color: var(--text-primary);">${escapeHtml(activity.title)}</strong>
-              </td>
-              <td>
-                <span class="badge ${statusLabels[activity.status].class}">${statusLabels[activity.status].text}</span>
-              </td>
-              <td>${activity.registrationCount || 0} 人</td>
-              <td>${formatDate(activity.startTime)}</td>
-              <td>${escapeHtml(activity.location || '待定')}</td>
-              <td>
-                <button class="btn btn--sm btn--ghost" onclick="event.stopPropagation(); editActivity('${activity.id}')">编辑</button>
-                ${activity.status !== 'cancelled' && activity.status !== 'ended' ? `
-                  <button class="btn btn--sm ${activity.status === 'active' ? 'btn--danger' : 'btn--success'}" onclick="event.stopPropagation(); toggleActivityStatus('${activity.id}', '${activity.status === 'active' ? 'ended' : 'active'}')">
-                    ${activity.status === 'active' ? '结束' : '开始'}
-                  </button>
-                ` : ''}
-              </td>
-            </tr>
-          `).join("") : `
+          ${filtered.length ? filtered.map(activity => {
+            const cfg = statusConfig[activity.status] || statusConfig.pending;
+            const isFull = activity.maxParticipants && activity.registrationCount >= activity.maxParticipants;
+            // Show first 3 attendee names
+            const attendeeNames = (activity.recentRegistrations || []).slice(0, 3);
+            const attendeeHtml = attendeeNames.length > 0 
+              ? `<div style="display:flex;gap:4px;flex-wrap:wrap;">${attendeeNames.map(n => `<span style="padding:2px 8px;background:var(--bg-tertiary);border-radius:4px;font-size:12px;color:var(--text-secondary);">${escapeHtml(n)}</span>`).join('')}${activity.registrationCount > 3 ? `<span style="padding:2px 8px;font-size:12px;color:var(--text-muted);">+${activity.registrationCount - 3}</span>` : ''}</div>`
+              : '<span style="color:var(--text-muted);font-size:12px;">—</span>';
+            
+            return `
+              <tr onclick="openActivityDetail('${activity.id}')" style="cursor: pointer;">
+                <td>
+                  <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${cfg.dot};"></span>
+                </td>
+                <td>
+                  <div style="display:flex;flex-direction:column;gap:2px;">
+                    <strong style="color: var(--text-primary);">${escapeHtml(activity.title)}</strong>
+                    <span class="badge ${cfg.class}" style="width:fit-content;font-size:11px;padding:1px 6px;">${cfg.text}</span>
+                  </div>
+                </td>
+                <td>
+                  <span style="font-family:var(--font-mono);font-size:14px;color:${isFull ? 'var(--accent-red)' : 'var(--text-primary)'};">
+                    ${activity.registrationCount}${activity.maxParticipants ? ` / ${activity.maxParticipants}` : ''}
+                  </span>
+                  ${isFull ? '<span style="color:var(--accent-red);font-size:11px;margin-left:4px;">已满</span>' : ''}
+                </td>
+                <td>${attendeeHtml}</td>
+                <td style="font-size:13px;color:var(--text-secondary);white-space:nowrap;">${formatDate(activity.startTime)}</td>
+                <td>
+                  <div style="display:flex;gap:4px;">
+                    <button class="btn btn--sm btn--ghost" onclick="event.stopPropagation(); editActivity('${activity.id}')">编辑</button>
+                    ${activity.status !== 'cancelled' && activity.status !== 'ended' ? `
+                      <button class="btn btn--sm ${activity.status === 'active' ? 'btn--danger' : 'btn--success'}" onclick="event.stopPropagation(); toggleActivityStatus('${activity.id}', '${activity.status === 'active' ? 'ended' : 'active'}')">
+                        ${activity.status === 'active' ? '结束' : '开始'}
+                      </button>
+                    ` : ''}
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join("") : `
             <tr>
               <td colspan="6" style="text-align: center; padding: var(--sp-8) 0; color: var(--text-secondary);">
                 暂无活动数据
@@ -664,12 +684,22 @@ function renderActivityPage() {
 }
 
 function renderActivityDetailPage(activity) {
-  const statusLabels = {
-    pending: "即将开始",
-    active: "进行中",
-    ended: "已结束",
-    cancelled: "已取消"
+  const statusConfig = {
+    pending: { text: "即将开始", class: "badge--amber", color: "#e8a830" },
+    active: { text: "进行中", class: "badge--cyan", color: "#00d4aa" },
+    ended: { text: "已结束", class: "badge--ghost", color: "#7a7f8e" },
+    cancelled: { text: "已取消", class: "badge--red", color: "#ff4444" }
   };
+  const cfg = statusConfig[activity.status] || statusConfig.pending;
+  const isFull = activity.maxParticipants && activity.registrationCount >= activity.maxParticipants;
+
+  // Pre-render known attendees from recentRegistrations
+  const knownAttendees = (activity.recentRegistrations || []).map(name => `
+    <span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--bg-tertiary);border:var(--border-subtle);border-radius:6px;font-size:13px;color:var(--text-primary);">
+      <span style="width:20px;height:20px;border-radius:50%;background:var(--accent-amber-dim);color:var(--accent-amber);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;">${name.charAt(0)}</span>
+      ${escapeHtml(name)}
+    </span>
+  `).join('');
 
   return `
     <header class="admin-toolbar detail-toolbar">
@@ -681,11 +711,35 @@ function renderActivityDetailPage(activity) {
       <button class="icon-button" onclick="setAdminView('activities')">返回列表</button>
     </header>
 
-    <section class="metric-grid">
-      ${summaryTile("报名人数", activity.registrationCount || 0)}
-      ${summaryTile("活动状态", statusLabels[activity.status] || activity.status)}
-      ${summaryTile("开始时间", formatDate(activity.startTime))}
-      ${activity.endTime ? summaryTile("结束时间", formatDate(activity.endTime)) : ''}
+    <!-- Status Banner -->
+    <section style="padding: var(--sp-4); background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%); border: var(--border-subtle); border-radius: var(--radius-md); border-left: 3px solid ${cfg.color}; margin-bottom: var(--sp-4);">
+      <div style="display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-2);">
+        <span style="width:8px;height:8px;border-radius:50%;background:${cfg.color};"></span>
+        <span class="badge ${cfg.class}">${cfg.text}</span>
+        ${isFull ? '<span class="badge badge--red">名额已满</span>' : ''}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:var(--sp-3);">
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">报名人数</div>
+          <div style="font-family:var(--font-mono);font-size:18px;color:var(--text-primary);">${activity.registrationCount}${activity.maxParticipants ? ` <span style="font-size:13px;color:var(--text-muted);">/ ${activity.maxParticipants}</span>` : ''}</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">开始时间</div>
+          <div style="font-size:14px;color:var(--text-primary);">${formatDate(activity.startTime)}</div>
+        </div>
+        ${activity.endTime ? `
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">结束时间</div>
+            <div style="font-size:14px;color:var(--text-primary);">${formatDate(activity.endTime)}</div>
+          </div>
+        ` : ''}
+        ${activity.location ? `
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">地点</div>
+            <div style="font-size:14px;color:var(--text-primary);">${escapeHtml(activity.location)}</div>
+          </div>
+        ` : ''}
+      </div>
     </section>
 
     ${activity.description ? `
@@ -702,22 +756,29 @@ function renderActivityDetailPage(activity) {
       </section>
     ` : ''}
 
-    ${activity.location ? `
-      <section class="info-section">
-        <h3>活动地点</h3>
-        <p style="color: var(--text-secondary); line-height: 1.7;">📍 ${escapeHtml(activity.location)}</p>
-      </section>
-    ` : ''}
-
     ${activity.contact ? `
       <section class="info-section">
         <h3>联系方式</h3>
-        <p style="color: var(--text-secondary); line-height: 1.7;">📞 ${escapeHtml(activity.contact)}</p>
+        <p style="color: var(--text-secondary); line-height: 1.7;">${escapeHtml(activity.contact)}</p>
       </section>
     ` : ''}
 
+    <!-- Attendees Section: Prominent -->
     <section class="admin-table-wrap">
-      <h3 style="margin-bottom: var(--sp-4); font-size: 1rem;">报名人员列表</h3>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-4);">
+        <h3 style="font-size: 1rem; display:flex;align-items:center;gap:var(--sp-2);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          报名人员
+          <span style="font-family:var(--font-mono);font-size:12px;color:var(--text-muted);background:var(--bg-tertiary);padding:2px 8px;border-radius:100px;">${activity.registrationCount}人</span>
+        </h3>
+      </div>
+      
+      ${knownAttendees ? `
+        <div style="display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-bottom:var(--sp-4);padding:var(--sp-3);background:var(--bg-secondary);border:var(--border-subtle);border-radius:var(--radius-md);">
+          ${knownAttendees}
+        </div>
+      ` : ''}
+      
       <table class="admin-table" id="registration-list-container">
         <thead>
           <tr>

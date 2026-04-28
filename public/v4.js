@@ -2469,12 +2469,14 @@ const V4 = (() => {
 
   // ─── PUBLIC API ────────────────────────────────────────
   // ─── ACTIVITIES VIEWS ──────────────────────────────────────────────────
-  // 活动列表页
+  // 活动列表页 — Tactical Briefing Cards
   async function renderActivities() {
     const container = $('#activities-content');
     container.innerHTML = `
       <div class="empty-state">
-        <div class="empty-state__icon">📋</div>
+        <div class="empty-state__icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
         <div class="empty-state__text">加载中...</div>
       </div>
     `;
@@ -2485,48 +2487,69 @@ const V4 = (() => {
       if (activities.length === 0) {
         container.innerHTML = `
           <div class="empty-state mt-6">
-            <div class="empty-state__icon">📭</div>
+            <div class="empty-state__icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
             <div class="empty-state__text">暂无活动</div>
-            <p style="color:var(--text-muted);margin-top:8px;">敬请期待后续活动安排</p>
+            <p style="color:var(--text-muted);margin-top:8px;font-size:var(--fs-sm);">敬请期待后续活动安排</p>
           </div>
         `;
         return;
       }
 
-      const statusLabels = {
-        pending: { text: '即将开始', class: 'badge--ghost' },
-        active: { text: '进行中', class: 'badge--cyan' },
-        ended: { text: '已结束', class: 'badge--ghost' },
-        cancelled: { text: '已取消', class: 'badge--red' }
+      const statusConfig = {
+        pending: { text: '即将开始', color: 'var(--accent-amber)' },
+        active: { text: '进行中', color: 'var(--accent-cyan)' },
+        ended: { text: '已结束', color: 'var(--text-muted)' },
+        cancelled: { text: '已取消', color: 'var(--accent-red)' }
+      };
+
+      // Icons as inline SVG
+      const icons = {
+        calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+        location: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+        users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>'
       };
 
       container.innerHTML = `
         <div class="activity-list animate-in">
           ${activities.map(activity => {
-            const status = statusLabels[activity.status] || statusLabels.pending;
+            const cfg = statusConfig[activity.status] || statusConfig.pending;
             const startTime = new Date(activity.startTime).toLocaleString('zh-CN', {
               month: '2-digit',
               day: '2-digit',
               hour: '2-digit',
               minute: '2-digit'
             });
+            const isFull = activity.maxParticipants && activity.registrationCount >= activity.maxParticipants;
+            
+            // Generate attendee avatars (first letters of names if available)
+            const attendeeAvatars = (activity.recentRegistrations || []).slice(0, 3).map((name, i) => 
+              `<span class="activity-card__attendee-avatar" style="z-index:${3-i}">${name.charAt(0)}</span>`
+            ).join('');
+            
             return `
-              <div class="activity-card" onclick="V4.openActivityDetail('${activity.id}')">
-                <div class="activity-card__header">
-                  <h3 class="activity-card__title">${escapeHtml(activity.title)}</h3>
-                  <span class="badge ${status.class}">${status.text}</span>
-                </div>
-                <p class="activity-card__desc">${escapeHtml(activity.description || '')}</p>
-                <div class="activity-card__meta">
-                  <span class="activity-card__time">📅 ${startTime}</span>
-                  <span class="activity-card__location">📍 ${escapeHtml(activity.location || '待定')}</span>
-                  <span class="activity-card__count">👥 ${activity.registrationCount}${activity.maxParticipants ? `/${activity.maxParticipants}` : ''} 人</span>
-                </div>
-                ${activity.isRegistered ? `
-                  <div class="activity-card__status">
-                    <span class="badge badge--amber">✓ 已报名</span>
+              <div class="activity-card" data-status="${activity.status}" onclick="V4.openActivityDetail('${activity.id}')">
+                <div class="activity-card__body">
+                  <div class="activity-card__top">
+                    <span class="badge activity-card__status-badge" style="background:${cfg.color}15;color:${cfg.color};border:1px solid ${cfg.color}30;">${cfg.text}</span>
+                    <h3 class="activity-card__title">${escapeHtml(activity.title)}</h3>
                   </div>
-                ` : ''}
+                  <div class="activity-card__meta-bar">
+                    <span class="activity-card__meta-item">${icons.calendar} ${startTime}</span>
+                    ${activity.location ? `<span class="activity-card__meta-item">${icons.location} ${escapeHtml(activity.location)}</span>` : ''}
+                    <span class="activity-card__meta-item">${icons.users} ${activity.registrationCount}${activity.maxParticipants ? `/${activity.maxParticipants}` : ''}人${isFull ? ' <span style="color:var(--accent-red)">(已满)</span>' : ''}</span>
+                  </div>
+                  ${activity.registrationCount > 0 ? `
+                    <div class="activity-card__attendees">
+                      <div class="activity-card__attendee-avatars">
+                        ${attendeeAvatars || `<span class="activity-card__attendee-avatar" style="font-size:10px;background:var(--accent-cyan-dim);color:var(--accent-cyan);">${activity.registrationCount}</span>`}
+                      </div>
+                      <span class="activity-card__attendee-count">${activity.registrationCount}人已报名</span>
+                      ${activity.isRegistered ? `<span class="activity-card__my-badge">已报名</span>` : ''}
+                    </div>
+                  ` : ''}
+                </div>
               </div>
             `;
           }).join('')}
@@ -2542,12 +2565,14 @@ const V4 = (() => {
     }
   }
 
-  // 活动详情页
+  // 活动详情页 — Tactical Briefing
   async function renderActivityDetail(activityId) {
     const container = $('#activity-detail-content');
     container.innerHTML = `
       <div class="empty-state">
-        <div class="empty-state__icon">📋</div>
+        <div class="empty-state__icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
         <div class="empty-state__text">加载中...</div>
       </div>
     `;
@@ -2563,74 +2588,108 @@ const V4 = (() => {
         return;
       }
 
+      const statusConfig = {
+        active: { text: '进行中', color: 'var(--accent-cyan)', dot: true },
+        pending: { text: '即将开始', color: 'var(--accent-amber)', dot: false },
+        ended: { text: '已结束', color: 'var(--text-muted)', dot: false },
+        cancelled: { text: '已取消', color: 'var(--accent-red)', dot: false }
+      };
+      const cfg = statusConfig[activity.status] || statusConfig.pending;
+
       const startTime = new Date(activity.startTime).toLocaleString('zh-CN', {
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
+        month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
       });
       const endTime = activity.endTime ? new Date(activity.endTime).toLocaleString('zh-CN', {
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
+        month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
       }) : '';
 
       const canRegister = activity.status === 'active' || activity.status === 'pending';
       const isFull = activity.maxParticipants && activity.registrationCount >= activity.maxParticipants;
 
+      // Build attendee chips from recentRegistrations
+      const attendeeChips = (activity.recentRegistrations || []).map(name => `
+        <span class="activity-detail__attendee-chip">
+          <span class="activity-detail__attendee-chip-avatar">${name.charAt(0)}</span>
+          ${escapeHtml(name)}
+        </span>
+      `).join('');
+
+      // Action button state
+      let actionBtn = '';
+      if (!canRegister) {
+        actionBtn = `<button class="btn btn--secondary btn--block" disabled>${activity.status === 'ended' ? '活动已结束' : '报名已截止'}</button>`;
+      } else if (activity.isRegistered) {
+        actionBtn = `<button class="btn btn--danger btn--block" id="activity-action-btn" onclick="V4.cancelActivityRegistration('${activity.id}')">取消报名</button>`;
+      } else if (isFull) {
+        actionBtn = `<button class="btn btn--secondary btn--block" disabled>名额已满 (${activity.registrationCount}/${activity.maxParticipants})</button>`;
+      } else {
+        actionBtn = `<button class="btn btn--primary btn--block" id="activity-action-btn" onclick="V4.registerForActivity('${activity.id}')">立即报名</button>`;
+      }
+
       container.innerHTML = `
         <div class="activity-detail animate-in">
-          <div class="activity-detail__header">
-            <h2>${escapeHtml(activity.title)}</h2>
-            <span class="badge ${activity.status === 'active' ? 'badge--cyan' : 'badge--ghost'}">
-              ${activity.status === 'active' ? '进行中' : activity.status === 'pending' ? '即将开始' : activity.status === 'ended' ? '已结束' : '已取消'}
-            </span>
-          </div>
-
-          <div class="info-block">
-            <div class="info-block__title">活动信息</div>
-            <div class="activity-detail__info">
-              <p><span>📅 开始时间：</span>${startTime}</p>
-              ${endTime ? `<p><span>⏱️ 结束时间：</span>${endTime}</p>` : ''}
-              <p><span>📍 活动地点：</span>${escapeHtml(activity.location || '待定')}</p>
-              <p><span>👥 报名人数：</span>${activity.registrationCount}${activity.maxParticipants ? ` / ${activity.maxParticipants}` : ''} 人</p>
-              <p><span>ℹ️  联系方式：</span>${escapeHtml(activity.contact || '待定')}</p>
+          <div class="activity-detail__hero" data-status="${activity.status}">
+            <div class="activity-detail__hero-status" style="color:${cfg.color}">
+              ${cfg.dot ? '<span class="activity-detail__hero-status-dot"></span>' : ''}
+              ${cfg.text}
             </div>
+            <h2>${escapeHtml(activity.title)}</h2>
+            ${activity.description ? `<p class="activity-detail__hero-subtitle">${escapeHtml(activity.description)}</p>` : ''}
           </div>
 
-          ${activity.description ? `
-            <div class="info-block">
-              <div class="info-block__title">活动说明</div>
-              <div class="info-block__text">${escapeHtml(activity.description)}</div>
+          <div class="activity-detail__info-grid">
+            <div class="activity-detail__info-cell">
+              <div class="activity-detail__info-label">开始时间</div>
+              <div class="activity-detail__info-value">${startTime}</div>
+            </div>
+            ${endTime ? `
+              <div class="activity-detail__info-cell">
+                <div class="activity-detail__info-label">结束时间</div>
+                <div class="activity-detail__info-value">${endTime}</div>
+              </div>
+            ` : ''}
+            <div class="activity-detail__info-cell">
+              <div class="activity-detail__info-label">地点</div>
+              <div class="activity-detail__info-value">${escapeHtml(activity.location || '待定')}</div>
+            </div>
+            <div class="activity-detail__info-cell">
+              <div class="activity-detail__info-label">报名</div>
+              <div class="activity-detail__info-value">${activity.registrationCount}${activity.maxParticipants ? ` / ${activity.maxParticipants}` : ''} 人</div>
+            </div>
+            ${activity.contact ? `
+              <div class="activity-detail__info-cell activity-detail__info-cell--full">
+                <div class="activity-detail__info-label">联系方式</div>
+                <div class="activity-detail__info-value">${escapeHtml(activity.contact)}</div>
+              </div>
+            ` : ''}
+          </div>
+
+          ${activity.registrationCount > 0 ? `
+            <div class="activity-detail__attendees">
+              <div class="activity-detail__attendees-header">
+                <span class="activity-detail__attendees-title">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                  已报名人员
+                </span>
+                <span class="activity-detail__attendees-count">${activity.registrationCount}人</span>
+              </div>
+              <div class="activity-detail__attendee-list">
+                ${attendeeChips || '<span style="color:var(--text-muted);font-size:var(--fs-sm);">加载报名人员...</span>'}
+              </div>
             </div>
           ` : ''}
 
           ${activity.requirements ? `
-            <div class="info-block">
-              <div class="info-block__title">注意事项</div>
-              <div class="info-block__text">${escapeHtml(activity.requirements)}</div>
+            <div class="activity-detail__section">
+              <div class="activity-detail__section-title">注意事项</div>
+              <div class="activity-detail__section-body">${escapeHtml(activity.requirements)}</div>
             </div>
           ` : ''}
 
-          <div class="activity-detail__actions mt-4">
-            ${!canRegister ? `
-              <button class="btn btn--secondary btn--block" disabled>
-                ${activity.status === 'ended' ? '活动已结束' : '报名已截止'}
-              </button>
-            ` : activity.isRegistered ? `
-              <button class="btn btn--danger btn--block" id="activity-action-btn" onclick="V4.cancelActivityRegistration('${activity.id}')">
-                取消报名
-              </button>
-            ` : isFull ? `
-              <button class="btn btn--secondary btn--block" disabled>
-                名额已满
-              </button>
-            ` : `
-              <button class="btn btn--primary btn--block" id="activity-action-btn" onclick="V4.registerForActivity('${activity.id}')">
-                立即报名
-              </button>
-            `}
+          <div class="activity-detail__action-bar">
+            <div class="activity-detail__action-bar-inner">
+              ${actionBtn}
+            </div>
           </div>
         </div>
       `;
@@ -2689,12 +2748,14 @@ const V4 = (() => {
     }
   }
 
-  // 我的活动记录
+  // 我的活动记录 — Compact Tactical List
   async function renderMyActivities() {
     const container = $('#my-activities-content');
     container.innerHTML = `
       <div class="empty-state">
-        <div class="empty-state__icon">📋</div>
+        <div class="empty-state__icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
         <div class="empty-state__text">加载中...</div>
       </div>
     `;
@@ -2705,7 +2766,9 @@ const V4 = (() => {
       if (registrations.length === 0) {
         container.innerHTML = `
           <div class="empty-state mt-6">
-            <div class="empty-state__icon">📭</div>
+            <div class="empty-state__icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
             <div class="empty-state__text">暂无活动记录</div>
             <button class="btn btn--primary btn--sm mt-3" onclick="V4.switchTab('activities')">去看看有什么活动</button>
           </div>
@@ -2713,27 +2776,30 @@ const V4 = (() => {
         return;
       }
 
+      const statusDotClass = {
+        active: 'my-activity-item__status--active',
+        pending: 'my-activity-item__status--pending',
+        ended: 'my-activity-item__status--ended',
+        cancelled: 'my-activity-item__status--cancelled'
+      };
+
       container.innerHTML = `
-        <div class="activity-list animate-in mt-4">
+        <div class="my-activity-list animate-in">
           ${registrations.map(reg => {
             const startTime = new Date(reg.activityStartTime).toLocaleString('zh-CN', {
-              month: '2-digit',
-              day: '2-digit',
-              hour: '2-digit',
-              minute: '2-digit'
+              month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
             });
+            const dotClass = statusDotClass[reg.activityStatus] || statusDotClass.pending;
             return `
-              <div class="activity-card" onclick="V4.openActivityDetail('${reg.activityId}')">
-                <div class="activity-card__header">
-                  <h3 class="activity-card__title">${escapeHtml(reg.activityTitle)}</h3>
-                  <span class="badge ${reg.status === 'registered' ? 'badge--cyan' : 'badge--ghost'}">
-                    ${reg.status === 'registered' ? '已报名' : reg.status}
-                  </span>
+              <div class="my-activity-item" onclick="V4.openActivityDetail('${reg.activityId}')">
+                <span class="my-activity-item__status ${dotClass}"></span>
+                <div class="my-activity-item__content">
+                  <div class="my-activity-item__title">${escapeHtml(reg.activityTitle)}</div>
+                  <div class="my-activity-item__meta">${startTime} · ${escapeHtml(reg.activityLocation || '待定')}</div>
                 </div>
-                <div class="activity-card__meta">
-                  <span class="activity-card__time">📅 ${startTime}</span>
-                  <span class="activity-card__location">📍 ${escapeHtml(reg.activityLocation || '待定')}</span>
-                </div>
+                <span class="badge ${reg.status === 'registered' ? 'badge--cyan' : 'badge--ghost'} my-activity-item__badge">
+                  ${reg.status === 'registered' ? '已报名' : '已取消'}
+                </span>
               </div>
             `;
           }).join('')}
