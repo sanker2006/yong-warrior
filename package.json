@@ -1,0 +1,16 @@
+{
+  "name": "laser-training-h5",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js && node --check lib/store.js && node --check public/app.js && node --check public/v2.js && node --check public/v3.1.js && node --check public/v3.2.js && node --check public/admin.js && node --check public/course-content-v2.js && node --check public/question-bank-v2.js && node --check scripts/api-smoke.js && node --check scripts/perf-smoke.js && node --check scripts/fill-missing-deepdives.js && node --check scripts/generate-course-assets.js && node --check scripts/import-course-content-v2.js && node --check scripts/check-course-content-v2.js && node --check scripts/import-question-bank-v2.js && node --check scripts/check-question-bank-v2.js && node scripts/check-v2-sprint1.js && node scripts/check-course-content-v2.js && node scripts/check-question-bank-v2.js",
+    "generate:course-assets": "node scripts/generate-course-assets.js",
+    "import:data": "node scripts/generate-course-assets.js && node scripts/import-course-content-v2.js && node scripts/import-question-bank-v2.js",
+    "import:course": "node scripts/import-course-content-v2.js",
+    "import:qbank": "node scripts/import-question-bank-v2.js",
+    "test:api": "node scripts/api-smoke.js",
+    "test:perf": "node scripts/perf-smoke.js"
+  }
+}

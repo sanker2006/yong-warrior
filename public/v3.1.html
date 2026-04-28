@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0c10">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>甬士训练 V3.1 — 作战终端</title>
+  <link rel="stylesheet" href="v3.1.css">
+  <link rel="icon" href="assets/yongshi-logo-transparent.png" type="image/png">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ═══════════════════════════════════════════
+       HEADER (fixed top)
+       ═══════════════════════════════════════════ -->
+  <header class="hud-header" id="hud-header">
+    <div class="hud-header__inner">
+      <button class="hud-header__back hidden" id="header-back" onclick="V3.goBack()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </button>
+      <h1 class="hud-header__title" id="header-title">甬士训练</h1>
+      <button class="hud-header__action hidden" id="header-action" onclick="V3.headerAction()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════
+       CONTENT AREA
+       ═══════════════════════════════════════════ -->
+  <main class="hud-content" id="hud-content">
+    <div class="view-container" id="view-container">
+
+      <!-- ─── LOGIN VIEW ─── -->
+      <div class="view-panel active" id="view-login">
+        <div class="hud-scroll">
+          <div class="login-view">
+            <img class="login-view__logo" src="assets/yongshi-logo-transparent.png" alt="甬士训练">
+            <h2 class="login-view__title">甬士训练</h2>
+            <p class="login-view__subtitle">Tactical Command Terminal</p>
+            <form class="login-view__form" id="login-form" onsubmit="return V3.handleLogin(event)">
+              <div class="form-group">
+                <label class="form-group__label">手机号</label>
+                <input class="form-input" type="tel" id="login-phone" placeholder="请输入手机号" maxlength="11" autocomplete="tel">
+              </div>
+              <div class="form-group">
+                <label class="form-group__label">密码</label>
+                <input class="form-input" type="password" id="login-password" placeholder="请输入密码" autocomplete="current-password">
+              </div>
+              <button class="btn btn--primary btn--block btn--lg" type="submit" id="login-btn">进入系统</button>
+              <p style="text-align:center;margin-top:4px;">
+                <button class="btn btn--ghost btn--sm" type="button" onclick="V3.showRegister()">注册新账号</button>
+              </p>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── REGISTER VIEW ─── -->
+      <div class="view-panel" id="view-register">
+        <div class="hud-scroll">
+          <div class="login-view">
+            <h2 class="login-view__title" style="font-size:1.375rem;">注册账号</h2>
+            <p class="login-view__subtitle">New Operator Registration</p>
+            <form class="login-view__form" id="register-form" onsubmit="return V3.handleRegister(event)">
+              <div class="form-group">
+                <label class="form-group__label">姓名</label>
+                <input class="form-input" type="text" id="reg-name" placeholder="真实姓名" autocomplete="name">
+              </div>
+              <div class="form-group">
+                <label class="form-group__label">手机号</label>
+                <input class="form-input" type="tel" id="reg-phone" placeholder="11位手机号" maxlength="11" autocomplete="tel">
+              </div>
+              <div class="form-group">
+                <label class="form-group__label">密码</label>
+                <input class="form-input" type="password" id="reg-password" placeholder="至少6位" autocomplete="new-password">
+              </div>
+              <button class="btn btn--primary btn--block btn--lg" type="submit">注册并登录</button>
+              <p style="text-align:center;margin-top:4px;">
+                <button class="btn btn--ghost btn--sm" type="button" onclick="V3.showLogin()">返回登录</button>
+              </p>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── TODAY VIEW (Dashboard) ─── -->
+      <div class="view-panel" id="view-today">
+        <div class="hud-scroll">
+          <div class="hud-scroll__inner" id="today-content">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── COURSE MAP VIEW ─── -->
+      <div class="view-panel" id="view-course">
+        <div class="hud-scroll">
+          <div class="hud-scroll__inner" id="course-map-content">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── COURSE DETAIL VIEW ─── -->
+      <div class="view-panel" id="view-course-detail">
+        <div class="hud-scroll">
+          <div class="hud-scroll__inner" id="course-detail-content">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── LESSON DETAIL VIEW ─── -->
+      <div class="view-panel" id="view-lesson">
+        <div class="hud-scroll">
+          <div class="hud-scroll__inner" id="lesson-content">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── QUIZ LIST VIEW ─── -->
+      <div class="view-panel" id="view-quiz">
+        <div class="hud-scroll">
+          <div class="hud-scroll__inner" id="quiz-list-content">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── QUIZ SESSION VIEW ─── -->
+      <div class="view-panel" id="view-quiz-session">
+        <div id="quiz-session-container">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- ─── PROFILE VIEW ─── -->
+      <div class="view-panel" id="view-profile">
+        <div class="hud-scroll">
+          <div class="hud-scroll__inner" id="profile-content">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── AAR VIEW ─── -->
+      <div class="view-panel" id="view-aar">
+        <div class="hud-scroll">
+          <div class="hud-scroll__inner" id="aar-content">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── ASSESSMENT VIEW ─── -->
+      <div class="view-panel" id="view-assessment">
+        <div class="hud-scroll">
+          <div class="hud-scroll__inner" id="assessment-content">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ═══════════════════════════════════════════
+       TAB BAR (fixed bottom)
+       ═══════════════════════════════════════════ -->
+  <nav class="hud-tabbar hidden" id="hud-tabbar">
+    <div class="hud-tabbar__inner">
+      <button class="hud-tabbar__item active" data-tab="today" onclick="V3.switchTab('today')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        <span>今日</span>
+      </button>
+      <button class="hud-tabbar__item" data-tab="course" onclick="V3.switchTab('course')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+        </svg>
+        <span>课程</span>
+      </button>
+      <button class="hud-tabbar__item" data-tab="quiz" onclick="V3.switchTab('quiz')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <span>题库</span>
+      </button>
+      <button class="hud-tabbar__item" data-tab="profile" onclick="V3.switchTab('profile')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <span>档案</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════
+       MODAL OVERLAY
+       ═══════════════════════════════════════════ -->
+  <div class="modal-overlay" id="modal-overlay" onclick="V3.closeModal()">
+    <div class="modal-sheet" onclick="event.stopPropagation()">
+      <div class="modal-sheet__handle"></div>
+      <div class="modal-sheet__body" id="modal-body">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       TOAST
+       ═══════════════════════════════════════════ -->
+  <div class="toast" id="toast"></div>
+
+</div>
+
+<!-- ═══ DATA FILES (shared with v2) ═══ -->
+<script src="training-data.js"></script>
+<script src="course-content-v2.js"></script>
+<script src="question-bank-v2.js"></script>
+
+<!-- ═══ V3 APP LOGIC ═══ -->
+<script src="v3.1.js"></script>
+
+</body>
+</html>

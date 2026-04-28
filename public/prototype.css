@@ -1,0 +1,550 @@
+:root {
+  --bg: #f3f1e9;
+  --paper: #fffdf6;
+  --ink: #192018;
+  --muted: #687164;
+  --line: #ded7c8;
+  --field: #263225;
+  --field-2: #35452f;
+  --accent: #b8792a;
+  --accent-2: #d9a44a;
+  --good: #557d4e;
+  --warn: #a14f3f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  background:
+    linear-gradient(90deg, rgba(25,32,24,.045) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(25,32,24,.045) 1px, transparent 1px),
+    var(--bg);
+  background-size: 28px 28px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: 0;
+}
+
+button {
+  border: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.proto-shell {
+  width: min(1040px, 100%);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding-bottom: 88px;
+}
+
+.proto-top {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  padding: 18px 18px 14px;
+  background: rgba(243,241,233,.94);
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(12px);
+}
+
+.proto-top span,
+section > span,
+article > span,
+.stage-line {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+h1, h2, h3, p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 0;
+  font-size: 25px;
+  line-height: 1.15;
+}
+
+h2 {
+  font-size: 30px;
+  line-height: 1.15;
+  margin-bottom: 10px;
+}
+
+h3 {
+  font-size: 19px;
+  margin-bottom: 8px;
+}
+
+p, li, small {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.plain-btn,
+.back-btn {
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--paper);
+  padding: 10px 13px;
+  font-weight: 800;
+}
+
+.proto-view {
+  padding: 18px;
+  display: grid;
+  gap: 16px;
+}
+
+.proto-nav {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  z-index: 20;
+  width: min(1040px, 100%);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  background: rgba(243,241,233,.96);
+  border-top: 1px solid var(--line);
+}
+
+.proto-nav button {
+  border-radius: 7px;
+  padding: 12px 8px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.proto-nav .active {
+  background: var(--field);
+  color: #fff;
+  border-color: var(--field);
+}
+
+.today-hero,
+.week-detail,
+.coach-hero,
+.profile-hero {
+  border-radius: 10px;
+  padding: 26px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--field), #131a13);
+  box-shadow: 0 18px 44px rgba(38,50,37,.22);
+}
+
+.today-hero p,
+.week-detail p,
+.coach-hero p,
+.profile-hero p {
+  color: #d7ddcf;
+}
+
+.next-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.next-actions button,
+.related-card button {
+  border-radius: 7px;
+  padding: 13px;
+  background: var(--accent-2);
+  color: #201507;
+  font-weight: 900;
+}
+
+.next-actions button:last-child {
+  background: #edf0e3;
+  color: var(--field);
+}
+
+.focus-card,
+.soft-card,
+.course-intro,
+.related-card,
+.recent-list,
+.coach-grid article,
+.coach-table,
+.scenario-card,
+.question-list,
+.lesson-flow article,
+.tag-board article,
+.achievement-strip article {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255,253,246,.92);
+  box-shadow: 0 12px 34px rgba(45,39,26,.08);
+}
+
+.focus-card,
+.soft-card,
+.course-intro,
+.related-card,
+.recent-list {
+  padding: 20px;
+}
+
+.focus-card ul {
+  margin: 12px 0 0;
+  padding-left: 20px;
+}
+
+.week-progress {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.week-progress article {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  background: var(--paper);
+}
+
+.week-progress b {
+  color: var(--accent);
+  font-size: 12px;
+}
+
+.week-progress strong,
+.week-progress span {
+  display: block;
+  margin-top: 6px;
+}
+
+.week-progress .done {
+  border-color: rgba(85,125,78,.45);
+  background: #edf4e9;
+}
+
+.week-progress .current {
+  border-color: rgba(184,121,42,.55);
+  background: #fff4df;
+}
+
+.soft-card,
+.profile-hero {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 16px;
+}
+
+.progress-ring {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 900;
+  background: conic-gradient(var(--accent) 70%, #e7decc 0);
+}
+
+.phase-road {
+  display: grid;
+  gap: 18px;
+}
+
+.phase-section {
+  display: grid;
+  grid-template-columns: 210px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.phase-copy {
+  position: sticky;
+  top: 92px;
+  border-left: 4px solid var(--accent);
+  padding: 4px 0 4px 14px;
+}
+
+.week-rail {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.week-tile {
+  min-height: 126px;
+  display: grid;
+  align-content: space-between;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  padding: 15px;
+}
+
+.week-tile span {
+  color: var(--accent);
+  font-weight: 900;
+}
+
+.week-tile strong {
+  line-height: 1.25;
+}
+
+.week-tile em {
+  color: var(--muted);
+  font-style: normal;
+  font-size: 13px;
+}
+
+.week-tile.done {
+  background: #edf4e9;
+}
+
+.week-tile.current {
+  background: #fff4df;
+  border-color: rgba(184,121,42,.55);
+}
+
+.lesson-flow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.lesson-flow article {
+  padding: 18px;
+}
+
+.lesson-flow b {
+  color: var(--accent);
+}
+
+.lesson-flow small {
+  display: block;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.bank-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.question-list,
+.scenario-card {
+  padding: 20px;
+}
+
+.question-list {
+  display: grid;
+  gap: 10px;
+}
+
+.question-list button {
+  text-align: left;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #f8f4ea;
+  padding: 12px;
+  font-weight: 900;
+}
+
+.question-list button em {
+  display: block;
+  color: var(--muted);
+  font-style: normal;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+.question-list .active {
+  border-color: var(--accent);
+  background: #fff3dd;
+}
+
+.choice-stack {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.choice-stack button {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 12px;
+  align-items: center;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #f8f4ea;
+  padding: 12px;
+}
+
+.choice-stack b {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #e9e0ce;
+}
+
+.choice-stack .correct {
+  border-color: var(--good);
+  background: #eaf4e8;
+}
+
+.answer-panel,
+.hint-panel {
+  margin-top: 16px;
+  border-radius: 9px;
+  padding: 14px;
+  background: #edf0e3;
+}
+
+.answer-panel div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.answer-panel span {
+  border-radius: 999px;
+  background: var(--field);
+  color: #fff;
+  padding: 5px 9px;
+  font-size: 12px;
+}
+
+.profile-hero strong {
+  font-size: 48px;
+  color: var(--accent-2);
+}
+
+.tag-board,
+.achievement-strip,
+.coach-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.tag-board article,
+.achievement-strip article,
+.coach-grid article {
+  padding: 16px;
+}
+
+.tag-board div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.tag-board i {
+  display: block;
+  height: 8px;
+  margin: 10px 0;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.achievement-strip .unlocked {
+  border-color: rgba(85,125,78,.5);
+  background: #edf4e9;
+}
+
+.recent-list p {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.coach-grid strong {
+  display: block;
+  font-size: 24px;
+  margin: 8px 0;
+}
+
+.coach-table {
+  overflow-x: auto;
+}
+
+.coach-table > div {
+  min-width: 760px;
+  display: grid;
+  grid-template-columns: 1.1fr .8fr 1fr .8fr 1.2fr;
+  gap: 12px;
+  padding: 13px 16px;
+  border-top: 1px solid var(--line);
+}
+
+.coach-table .table-head {
+  border-top: 0;
+  color: var(--accent);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+@media (max-width: 760px) {
+  .proto-view {
+    padding: 14px;
+  }
+
+  .proto-top {
+    align-items: flex-start;
+  }
+
+  .proto-top .plain-btn {
+    display: none;
+  }
+
+  h2 {
+    font-size: 25px;
+  }
+
+  .next-actions,
+  .week-progress,
+  .soft-card,
+  .phase-section,
+  .week-rail,
+  .lesson-flow,
+  .bank-layout,
+  .profile-hero,
+  .tag-board,
+  .achievement-strip,
+  .coach-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .phase-copy {
+    position: static;
+  }
+
+  .proto-nav {
+    grid-template-columns: repeat(5, minmax(58px, 1fr));
+    overflow-x: auto;
+  }
+
+  .proto-nav button {
+    white-space: nowrap;
+  }
+}

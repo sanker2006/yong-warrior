@@ -1,0 +1,17 @@
+*.log
+*.pid
+*.db
+*.db-shm
+*.db-wal
+.tmp/
+.gh-config/
+.workbuddy/
+
+# 运行时用户数据（含密码哈希，不上传）
+data/users.json
+data/progress.json
+data/aar.json
+data/assessments.json
+
+# node_modules（如果将来有依赖）
+node_modules/
