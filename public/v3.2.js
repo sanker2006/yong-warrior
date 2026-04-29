@@ -1642,7 +1642,6 @@ const V3 = (() => {
       body: JSON.stringify({ type: 'quiz', ...quizData })
     });
 
-    // Also save individual question attempts for each question - CRITICAL for progress tracking
     for (const r of results) {
       await api('/progress', {
         method: 'POST',

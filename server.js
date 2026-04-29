@@ -293,6 +293,7 @@ async function handleApi(req, res) {
   if (req.method === "POST" && registerMatch) {
     const user = getSessionUser(req);
     if (!user) return sendJson(res, 401, { error: "未登录" });
+    if (user.role === "instructor") return sendJson(res, 403, { error: "管理员账号不能报名活动，请使用学员账号" });
     const activityId = decodeURIComponent(registerMatch[1]);
     const result = store.registerForActivity(user.id, activityId);
     if (result.error) return sendJson(res, 400, result);
@@ -304,6 +305,7 @@ async function handleApi(req, res) {
   if (req.method === "POST" && cancelMatch) {
     const user = getSessionUser(req);
     if (!user) return sendJson(res, 401, { error: "未登录" });
+    if (user.role === "instructor") return sendJson(res, 403, { error: "管理员账号不能取消学员活动报名" });
     const activityId = decodeURIComponent(cancelMatch[1]);
     const result = store.cancelRegistration(user.id, activityId);
     if (result.error) return sendJson(res, 400, result);

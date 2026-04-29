@@ -21,6 +21,15 @@ async function api(path, options = {}) {
   return payload;
 }
 
+async function apiExpectError(path, options = {}) {
+  try {
+    await api(path, options);
+  } catch (error) {
+    return error;
+  }
+  throw new Error(`${path}: expected request to fail`);
+}
+
 async function run() {
   await wait(400);
   const phone = `199${Math.floor(10000000 + Math.random() * 89999999)}`;
@@ -110,7 +119,7 @@ async function run() {
       startTime: new Date(Date.now() + 86400000).toISOString(),
       endTime: new Date(Date.now() + 172800000).toISOString(),
       maxParticipants: 10,
-      status: "active"
+      status: "pending"
     })
   });
   assert(createResult.activity, "Admin should create activity");
@@ -137,10 +146,26 @@ async function run() {
   });
   assert(registerResult.success, "Registration should succeed");
 
-  // 6. Verify registration status
+  const adminRegisterError = await apiExpectError(`/api/activities/${activityId}/register`, {
+    method: "POST",
+    headers: adminHeaders
+  });
+  assert(adminRegisterError.message.includes("管理员账号不能报名活动"), "Admin account must not register for H5 activities");
+
+  // 6. Verify registration status before and after admin starts the activity
   const activityDetail2 = await api(`/api/activities/${activityId}`, { headers });
   assert(activityDetail2.registrationCount === 1, "Registration count should be 1");
   assert(activityDetail2.isRegistered === true, "User should be registered after registration");
+
+  await api(`/api/admin/activities/${activityId}`, {
+    method: "PUT",
+    headers: adminHeaders,
+    body: JSON.stringify({ status: "active" })
+  });
+  const activeDetail = await api(`/api/activities/${activityId}`, { headers });
+  assert(activeDetail.status === "active", "Activity should become active");
+  assert(activeDetail.registrationCount === 1, "Starting activity must not create another registration");
+  assert(activeDetail.isRegistered === true, "User should remain registered after activity starts");
 
   // 7. List user's activities
   const myRegistrations = await api("/api/activities/my", { headers });
@@ -151,6 +176,7 @@ async function run() {
   const adminRegistrations = await api(`/api/admin/activities/${activityId}/registrations`, { headers: adminHeaders });
   assert(Array.isArray(adminRegistrations.registrations), "Admin should list registrations");
   assert(adminRegistrations.registrations.length === 1, "Admin should see 1 registration");
+  assert(!adminRegistrations.registrations.some(r => r.name === "admin"), "Admin should not appear as a participant");
 
   // 9. Cancel registration
   const cancelResult = await api(`/api/activities/${activityId}/cancel`, {
