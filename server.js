@@ -327,6 +327,7 @@ async function handleApi(req, res) {
       registrationCount: store.getRegistrationCount(activityId),
       rentalCount: store.getRentalCount(activityId),
       isRegistered: store.isUserRegistered(user.id, activityId),
+      userRegistration: store.getUserActivityRegistration(user.id, activityId),
       recentRegistrations: store.getRecentRegistrations(activityId, 10)
     });
   }
@@ -354,7 +355,8 @@ async function handleApi(req, res) {
     if (!user) return sendJson(res, 401, { error: "未登录" });
     if (user.role !== "instructor") return sendJson(res, 403, { error: "无管理权限" });
     const body = await readBody(req);
-    if (!body.title) return sendJson(res, 400, { error: "活动名称必填" });
+    const validationError = validateActivityPayload(body);
+    if (validationError) return sendJson(res, 400, { error: validationError });
     const activity = store.createActivity(user, body);
     return sendJson(res, 200, { activity });
   }
@@ -367,8 +369,15 @@ async function handleApi(req, res) {
     if (user.role !== "instructor") return sendJson(res, 403, { error: "无管理权限" });
     const activityId = decodeURIComponent(adminActivityMatch[1]);
     const body = await readBody(req);
+    const existing = store.getActivity(activityId);
+    if (!existing) return sendJson(res, 404, { error: "活动不存在" });
+    const validationError = validateActivityPayload(body, {
+      existing,
+      registrationCount: store.getRegistrationCount(activityId),
+      rentalCount: store.getRentalCount(activityId)
+    });
+    if (validationError) return sendJson(res, 400, { error: validationError });
     const activity = store.updateActivity(activityId, body);
-    if (!activity) return sendJson(res, 404, { error: "活动不存在" });
     return sendJson(res, 200, { activity });
   }
 
@@ -400,6 +409,27 @@ function clampScore(value) {
   const score = Number(value);
   if (!Number.isFinite(score)) return 0;
   return Math.max(0, Math.min(100, score));
+}
+
+function validateActivityPayload(body, context = {}) {
+  if (body.title !== undefined && !String(body.title).trim()) return "活动名称必填";
+  if (!context.existing && !String(body.title || "").trim()) return "活动名称必填";
+
+  const startValue = body.startTime !== undefined ? body.startTime : context.existing?.startTime;
+  const endValue = body.endTime !== undefined ? (body.endTime || startValue) : (context.existing?.endTime || startValue);
+  const startTime = new Date(startValue);
+  const endTime = new Date(endValue);
+  if (!startValue || Number.isNaN(startTime.getTime())) return "活动开始时间无效";
+  if (endValue && Number.isNaN(endTime.getTime())) return "活动结束时间无效";
+  if (endValue && endTime < startTime) return "活动结束时间不能早于开始时间";
+
+  const maxParticipants = body.maxParticipants !== undefined ? Number(body.maxParticipants) : (context.existing?.maxParticipants ?? 0);
+  const maxRentalEquipment = body.maxRentalEquipment !== undefined ? Number(body.maxRentalEquipment) : (context.existing?.maxRentalEquipment ?? 0);
+  if (!Number.isFinite(maxParticipants) || maxParticipants < 0) return "人数上限不能小于0";
+  if (!Number.isFinite(maxRentalEquipment) || maxRentalEquipment < 0) return "租赁设备上限不能小于0";
+  if (maxParticipants > 0 && context.registrationCount > maxParticipants) return "人数上限不能小于当前已报名人数";
+  if (maxRentalEquipment > 0 && context.rentalCount > maxRentalEquipment) return "租赁设备上限不能小于当前已租赁人数";
+  return "";
 }
 
 function serveStatic(req, res) {

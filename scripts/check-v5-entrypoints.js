@@ -45,6 +45,8 @@ const checks = [
   ["V5 profile my activities opens registration history", /V5\.nav\('my-activities'\)/.test(js)],
   ["V5 pending and active activities can show signup CTA", /报名中/.test(js) && /\['pending','active'\]\.includes\(a\.status\)/.test(js)],
   ["V5 activity registration carries rental equipment choice", /rentEquipment/.test(js) && /maxRentalEquipment/.test(adminJs)],
+  ["V5 activity detail shows the current user's rental choice", /userRegistration/.test(js)],
+  ["V5 admin activity API validates time and capacity", /validateActivityPayload/.test(fs.readFileSync(path.join(root, "server.js"), "utf8"))],
   ["admin v5 deletes activities with confirmation", /function dact\(/.test(adminJs) && /confirm\('确定删除这个活动吗/.test(adminJs)],
   ["admin v5 renders real user detail", /api\(`\/api\/admin\/users\/\$\{encodeURIComponent\(id\)\}`\)/.test(adminJs) && !/用户详情功能开发中/.test(adminJs)],
   ["admin v5 datetime-local values preserve local wall time", /function dtl\(/.test(adminJs) && !/toISOString\(\)\.slice\(0,16\)/.test(adminJs)]

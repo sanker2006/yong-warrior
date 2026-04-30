@@ -127,6 +127,17 @@ async function run() {
   assert(createResult.activity, "Admin should create activity");
   const activityId = createResult.activity.id;
 
+  const invalidTimeError = await apiExpectError("/api/admin/activities", {
+    method: "POST",
+    headers: adminHeaders,
+    body: JSON.stringify({
+      title: "BMAD-Smoke Invalid Time",
+      startTime: new Date(Date.now() + 7200000).toISOString(),
+      endTime: new Date(Date.now() + 3600000).toISOString()
+    })
+  });
+  assert(invalidTimeError.message.includes("活动结束时间不能早于开始时间"), "Admin should not create activity with end before start");
+
   // 2. List activities (admin)
   const adminActivities = await api("/api/admin/activities", { headers: adminHeaders });
   assert(adminActivities.activities.some(a => a.id === activityId), "Admin should list the activity");
@@ -200,6 +211,13 @@ async function run() {
   });
   assert(activeRegister.success, "New users can register while activity is in progress");
 
+  const tooSmallCapacity = await apiExpectError(`/api/admin/activities/${activityId}`, {
+    method: "PUT",
+    headers: adminHeaders,
+    body: JSON.stringify({ maxParticipants: 1 })
+  });
+  assert(tooSmallCapacity.message.includes("人数上限不能小于当前已报名人数"), "Admin should not lower capacity below registered count");
+
   const adminRegistrations = await api(`/api/admin/activities/${activityId}/registrations`, { headers: adminHeaders });
   assert(Array.isArray(adminRegistrations.registrations), "Admin should list registrations");
   assert(adminRegistrations.registrations.filter(r => r.status === "registered").length === 2, "Admin should see active registrations");
@@ -225,6 +243,29 @@ async function run() {
     headers: { Authorization: `Bearer ${endedUser.token}` }
   });
   assert(endedRegisterError.message.includes("活动已结束"), "Ended activities should reject registration");
+
+  const concurrentActivity = await api("/api/admin/activities", {
+    method: "POST",
+    headers: adminHeaders,
+    body: JSON.stringify({
+      title: "BMAD-Smoke Concurrent Capacity",
+      startTime: new Date(Date.now() + 3600000).toISOString(),
+      endTime: new Date(Date.now() + 7200000).toISOString(),
+      maxParticipants: 1,
+      maxRentalEquipment: 1
+    })
+  });
+  const concurrentUsers = await Promise.all([0, 1].map(index => api("/api/register", {
+    method: "POST",
+    body: JSON.stringify({ phone: `194${index}${Math.floor(1000000 + Math.random() * 8999999)}`, password: "123456", name: `BMAD-Concurrent-${index}` })
+  })));
+  const concurrentResults = await Promise.allSettled(concurrentUsers.map(u => api(`/api/activities/${concurrentActivity.activity.id}/register`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${u.token}` },
+    body: JSON.stringify({ rentEquipment: true })
+  })));
+  assert(concurrentResults.filter(r => r.status === "fulfilled").length === 1, "Concurrent capacity should allow exactly one registration");
+  assert(concurrentResults.filter(r => r.status === "rejected").length === 1, "Concurrent capacity should reject overflow registration");
 
   const cancelResult = await api(`/api/activities/${activityId}/cancel`, {
     method: "POST",
@@ -253,6 +294,10 @@ async function run() {
     headers: adminHeaders
   });
   assert(deleteResult.success, "Activity deletion should succeed");
+  await api(`/api/admin/activities/${concurrentActivity.activity.id}`, {
+    method: "DELETE",
+    headers: adminHeaders
+  });
 
   cleanupSmokeUsers();
   console.log(JSON.stringify({
@@ -328,7 +373,7 @@ function assert(value, message) {
 
 function cleanupSmokeUsers() {
   const db = new DatabaseSync("data/app.db");
-  db.prepare("DELETE FROM users WHERE name LIKE 'BMAD-Smoke%' OR name = 'BMAD-Late-Activity' OR name = 'BMAD-Rental-Overflow' OR name = 'BMAD-Ended-Activity'").run();
+  db.prepare("DELETE FROM users WHERE name LIKE 'BMAD-Smoke%' OR name = 'BMAD-Late-Activity' OR name = 'BMAD-Rental-Overflow' OR name = 'BMAD-Ended-Activity' OR name LIKE 'BMAD-Concurrent-%'").run();
 }
 
 run()
