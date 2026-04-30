@@ -38,7 +38,14 @@ const checks = [
   ["V5 filters by skillClassification instead of domain", /qSkill\(/.test(js) && !/q\.domain/.test(js)],
   ["V5 AAR uses server record fields", /topic,plan,actual,improve/.test(js) && !/event:title,squad,note/.test(js)],
   ["V5 H5 and admin auth tokens are separated", /training-h5-token/.test(js) && /training-admin-token/.test(adminJs)],
-  ["V5 rejects instructor accounts in H5 shell", /role==='instructor'/.test(js) && /管理员账号请使用管理端登录/.test(js)]
+  ["V5 rejects instructor accounts in H5 shell", /role==='instructor'/.test(js) && /管理员账号请使用管理端登录/.test(js)],
+  ["V5 inactive views are hidden from accessibility tree", /function syncViews\(/.test(js) && /aria-hidden/.test(js) && /\.inert/.test(js)],
+  ["V5 quiz submission does not swallow save failures", /答题结果保存失败/.test(js) && !/function fqz\(\)[\s\S]*?catch\(e\)\{\}[\s\S]*?nav\('quiz-result'\)/.test(js)],
+  ["V5 my activities supports flattened server activity fields", /activityTitle/.test(js) && /activityStartTime/.test(js) && /activityLocation/.test(js)],
+  ["V5 profile my activities opens registration history", /V5\.nav\('my-activities'\)/.test(js)],
+  ["V5 active activities cannot show a new signup CTA", /活动进行中/.test(js) && /a\.status==='pending'/.test(js)],
+  ["admin v5 renders real user detail", /api\(`\/api\/admin\/users\/\$\{encodeURIComponent\(id\)\}`\)/.test(adminJs) && !/用户详情功能开发中/.test(adminJs)],
+  ["admin v5 datetime-local values preserve local wall time", /function dtl\(/.test(adminJs) && !/toISOString\(\)\.slice\(0,16\)/.test(adminJs)]
 ];
 
 const failures = checks.filter(([, passed]) => !passed);

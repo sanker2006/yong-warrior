@@ -171,6 +171,17 @@ async function run() {
   const myRegistrations = await api("/api/activities/my", { headers });
   assert(Array.isArray(myRegistrations.registrations), "Should list user registrations");
   assert(myRegistrations.registrations.some(r => r.activityId === activityId), "Should include the registered activity");
+  assert(myRegistrations.registrations.some(r => r.activityId === activityId && r.activityTitle === activityTitle), "My activity should include flattened activity title");
+
+  const lateUser = await api("/api/register", {
+    method: "POST",
+    body: JSON.stringify({ phone: `197${Math.floor(10000000 + Math.random() * 89999999)}`, password: "123456", name: "BMAD-Late-Activity" })
+  });
+  const activeRegisterError = await apiExpectError(`/api/activities/${activityId}/register`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${lateUser.token}` }
+  });
+  assert(activeRegisterError.message.includes("活动已开始"), "New users must not register after activity starts");
 
   // 8. Admin view registrations
   const adminRegistrations = await api(`/api/admin/activities/${activityId}/registrations`, { headers: adminHeaders });
@@ -283,7 +294,7 @@ function assert(value, message) {
 
 function cleanupSmokeUsers() {
   const db = new DatabaseSync("data/app.db");
-  db.prepare("DELETE FROM users WHERE name LIKE 'BMAD-Smoke%'").run();
+  db.prepare("DELETE FROM users WHERE name LIKE 'BMAD-Smoke%' OR name = 'BMAD-Late-Activity'").run();
 }
 
 run()
