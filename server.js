@@ -274,6 +274,7 @@ async function handleApi(req, res) {
     const result = activities.map(a => ({
       ...a,
       registrationCount: store.getRegistrationCount(a.id),
+      rentalCount: store.getRentalCount(a.id),
       isRegistered: store.isUserRegistered(user.id, a.id),
       recentRegistrations: store.getRecentRegistrations(a.id, 3)
     }));
@@ -295,7 +296,8 @@ async function handleApi(req, res) {
     if (!user) return sendJson(res, 401, { error: "未登录" });
     if (user.role === "instructor") return sendJson(res, 403, { error: "管理员账号不能报名活动，请使用学员账号" });
     const activityId = decodeURIComponent(registerMatch[1]);
-    const result = store.registerForActivity(user.id, activityId);
+    const body = await readBody(req);
+    const result = store.registerForActivity(user.id, activityId, { rentEquipment: Boolean(body.rentEquipment) });
     if (result.error) return sendJson(res, 400, result);
     return sendJson(res, 200, result);
   }
@@ -323,6 +325,7 @@ async function handleApi(req, res) {
     return sendJson(res, 200, {
       ...activity,
       registrationCount: store.getRegistrationCount(activityId),
+      rentalCount: store.getRentalCount(activityId),
       isRegistered: store.isUserRegistered(user.id, activityId),
       recentRegistrations: store.getRecentRegistrations(activityId, 10)
     });
@@ -339,6 +342,7 @@ async function handleApi(req, res) {
     const result = activities.map(a => ({
       ...a,
       registrationCount: store.getRegistrationCount(a.id),
+      rentalCount: store.getRentalCount(a.id),
       recentRegistrations: store.getRecentRegistrations(a.id, 3)
     }));
     return sendJson(res, 200, { activities: result });

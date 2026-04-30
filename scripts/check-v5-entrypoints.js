@@ -43,7 +43,9 @@ const checks = [
   ["V5 quiz submission does not swallow save failures", /答题结果保存失败/.test(js) && !/function fqz\(\)[\s\S]*?catch\(e\)\{\}[\s\S]*?nav\('quiz-result'\)/.test(js)],
   ["V5 my activities supports flattened server activity fields", /activityTitle/.test(js) && /activityStartTime/.test(js) && /activityLocation/.test(js)],
   ["V5 profile my activities opens registration history", /V5\.nav\('my-activities'\)/.test(js)],
-  ["V5 active activities cannot show a new signup CTA", /活动进行中/.test(js) && /a\.status==='pending'/.test(js)],
+  ["V5 pending and active activities can show signup CTA", /报名中/.test(js) && /\['pending','active'\]\.includes\(a\.status\)/.test(js)],
+  ["V5 activity registration carries rental equipment choice", /rentEquipment/.test(js) && /maxRentalEquipment/.test(adminJs)],
+  ["admin v5 deletes activities with confirmation", /function dact\(/.test(adminJs) && /confirm\('确定删除这个活动吗/.test(adminJs)],
   ["admin v5 renders real user detail", /api\(`\/api\/admin\/users\/\$\{encodeURIComponent\(id\)\}`\)/.test(adminJs) && !/用户详情功能开发中/.test(adminJs)],
   ["admin v5 datetime-local values preserve local wall time", /function dtl\(/.test(adminJs) && !/toISOString\(\)\.slice\(0,16\)/.test(adminJs)]
 ];

@@ -107,8 +107,9 @@ async function run() {
   assert(promo91.detail.profile.levelHistory.some(item => item.toLevel === "L1"), "Admin detail should expose level history");
 
   // ─── ACTIVITIES TESTS ───────────────────────────────────
-  // 1. Admin creates an activity
   const activityTitle = "BMAD-Smoke 活动测试";
+  const futureStart = new Date(Date.now() + 86400000).toISOString();
+  const futureEnd = new Date(Date.now() + 172800000).toISOString();
   const createResult = await api("/api/admin/activities", {
     method: "POST",
     headers: adminHeaders,
@@ -116,9 +117,10 @@ async function run() {
       title: activityTitle,
       description: "活动测试描述",
       location: "测试场地",
-      startTime: new Date(Date.now() + 86400000).toISOString(),
-      endTime: new Date(Date.now() + 172800000).toISOString(),
+      startTime: futureStart,
+      endTime: futureEnd,
       maxParticipants: 10,
+      maxRentalEquipment: 1,
       status: "pending"
     })
   });
@@ -136,15 +138,18 @@ async function run() {
   // 4. Get activity detail
   const activityDetail = await api(`/api/activities/${activityId}`, { headers });
   assert(activityDetail.id === activityId, "Should get activity detail");
+  assert(activityDetail.status === "pending", "Future activity should be open for signup");
   assert(activityDetail.registrationCount === 0, "Should have 0 registrations initially");
+  assert(activityDetail.rentalCount === 0, "Should have 0 rentals initially");
   assert(activityDetail.isRegistered === false, "User should not be registered initially");
 
-  // 5. Register for activity
   const registerResult = await api(`/api/activities/${activityId}/register`, {
     method: "POST",
-    headers
+    headers,
+    body: JSON.stringify({ rentEquipment: true })
   });
   assert(registerResult.success, "Registration should succeed");
+  assert(registerResult.registration.rentEquipment === true, "Registration should save rental equipment choice");
 
   const adminRegisterError = await apiExpectError(`/api/activities/${activityId}/register`, {
     method: "POST",
@@ -152,56 +157,86 @@ async function run() {
   });
   assert(adminRegisterError.message.includes("管理员账号不能报名活动"), "Admin account must not register for H5 activities");
 
-  // 6. Verify registration status before and after admin starts the activity
   const activityDetail2 = await api(`/api/activities/${activityId}`, { headers });
   assert(activityDetail2.registrationCount === 1, "Registration count should be 1");
+  assert(activityDetail2.rentalCount === 1, "Rental count should be 1");
   assert(activityDetail2.isRegistered === true, "User should be registered after registration");
 
-  await api(`/api/admin/activities/${activityId}`, {
-    method: "PUT",
-    headers: adminHeaders,
-    body: JSON.stringify({ status: "active" })
-  });
-  const activeDetail = await api(`/api/activities/${activityId}`, { headers });
-  assert(activeDetail.status === "active", "Activity should become active");
-  assert(activeDetail.registrationCount === 1, "Starting activity must not create another registration");
-  assert(activeDetail.isRegistered === true, "User should remain registered after activity starts");
-
-  // 7. List user's activities
   const myRegistrations = await api("/api/activities/my", { headers });
   assert(Array.isArray(myRegistrations.registrations), "Should list user registrations");
   assert(myRegistrations.registrations.some(r => r.activityId === activityId), "Should include the registered activity");
   assert(myRegistrations.registrations.some(r => r.activityId === activityId && r.activityTitle === activityTitle), "My activity should include flattened activity title");
+  assert(myRegistrations.registrations.some(r => r.activityId === activityId && r.rentEquipment === true), "My activity should include rental choice");
+
+  const rentalOverflowUser = await api("/api/register", {
+    method: "POST",
+    body: JSON.stringify({ phone: `196${Math.floor(10000000 + Math.random() * 89999999)}`, password: "123456", name: "BMAD-Rental-Overflow" })
+  });
+  const rentalOverflowError = await apiExpectError(`/api/activities/${activityId}/register`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${rentalOverflowUser.token}` },
+    body: JSON.stringify({ rentEquipment: true })
+  });
+  assert(rentalOverflowError.message.includes("租赁设备名额已满"), "Rental equipment quota should be enforced independently");
 
   const lateUser = await api("/api/register", {
     method: "POST",
     body: JSON.stringify({ phone: `197${Math.floor(10000000 + Math.random() * 89999999)}`, password: "123456", name: "BMAD-Late-Activity" })
   });
-  const activeRegisterError = await apiExpectError(`/api/activities/${activityId}/register`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${lateUser.token}` }
+  await api(`/api/admin/activities/${activityId}`, {
+    method: "PUT",
+    headers: adminHeaders,
+    body: JSON.stringify({
+      startTime: new Date(Date.now() - 300000).toISOString(),
+      endTime: new Date(Date.now() + 3600000).toISOString()
+    })
   });
-  assert(activeRegisterError.message.includes("活动已开始"), "New users must not register after activity starts");
+  const activeDetail = await api(`/api/activities/${activityId}`, { headers });
+  assert(activeDetail.status === "active", "Activity should become active by time range");
+  const activeRegister = await api(`/api/activities/${activityId}/register`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${lateUser.token}` },
+    body: JSON.stringify({ rentEquipment: false })
+  });
+  assert(activeRegister.success, "New users can register while activity is in progress");
 
-  // 8. Admin view registrations
   const adminRegistrations = await api(`/api/admin/activities/${activityId}/registrations`, { headers: adminHeaders });
   assert(Array.isArray(adminRegistrations.registrations), "Admin should list registrations");
-  assert(adminRegistrations.registrations.length === 1, "Admin should see 1 registration");
+  assert(adminRegistrations.registrations.filter(r => r.status === "registered").length === 2, "Admin should see active registrations");
+  assert(adminRegistrations.registrations.some(r => r.rentEquipment === true), "Admin registrations should expose rental choice");
   assert(!adminRegistrations.registrations.some(r => r.name === "admin"), "Admin should not appear as a participant");
 
-  // 9. Cancel registration
+  const endedUser = await api("/api/register", {
+    method: "POST",
+    body: JSON.stringify({ phone: `195${Math.floor(10000000 + Math.random() * 89999999)}`, password: "123456", name: "BMAD-Ended-Activity" })
+  });
+  await api(`/api/admin/activities/${activityId}`, {
+    method: "PUT",
+    headers: adminHeaders,
+    body: JSON.stringify({
+      startTime: new Date(Date.now() - 7200000).toISOString(),
+      endTime: new Date(Date.now() - 3600000).toISOString()
+    })
+  });
+  const endedDetail = await api(`/api/activities/${activityId}`, { headers });
+  assert(endedDetail.status === "ended", "Activity should become ended by time range");
+  const endedRegisterError = await apiExpectError(`/api/activities/${activityId}/register`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${endedUser.token}` }
+  });
+  assert(endedRegisterError.message.includes("活动已结束"), "Ended activities should reject registration");
+
   const cancelResult = await api(`/api/activities/${activityId}/cancel`, {
     method: "POST",
     headers
   });
   assert(cancelResult.success, "Cancellation should succeed");
 
-  // 10. Verify cancellation
   const activityDetail3 = await api(`/api/activities/${activityId}`, { headers });
-  assert(activityDetail3.registrationCount === 0, "Registration count should be 0 after cancellation");
+  assert(activityDetail3.registrationCount === 1, "Registration count should exclude cancelled user");
+  assert(activityDetail3.rentalCount === 0, "Rental count should drop after cancellation");
   assert(activityDetail3.isRegistered === false, "User should not be registered after cancellation");
 
-  // 11. Update activity
   const updatedTitle = activityTitle + " (更新)";
   const updateResult = await api(`/api/admin/activities/${activityId}`, {
     method: "PUT",
@@ -213,7 +248,6 @@ async function run() {
   });
   assert(updateResult.activity.title === updatedTitle, "Activity update should work");
 
-  // 12. Delete activity
   const deleteResult = await api(`/api/admin/activities/${activityId}`, {
     method: "DELETE",
     headers: adminHeaders
@@ -294,7 +328,7 @@ function assert(value, message) {
 
 function cleanupSmokeUsers() {
   const db = new DatabaseSync("data/app.db");
-  db.prepare("DELETE FROM users WHERE name LIKE 'BMAD-Smoke%' OR name = 'BMAD-Late-Activity'").run();
+  db.prepare("DELETE FROM users WHERE name LIKE 'BMAD-Smoke%' OR name = 'BMAD-Late-Activity' OR name = 'BMAD-Rental-Overflow' OR name = 'BMAD-Ended-Activity'").run();
 }
 
 run()
